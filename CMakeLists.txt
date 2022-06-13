@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.10)
+
+set(PROJECT_NAME "ChatLab")
+
+project(${PROJECT_NAME} VERSION 0.1)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED TURE)
+
+message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
+message(STATUS "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
+
+add_subdirectory(src)
