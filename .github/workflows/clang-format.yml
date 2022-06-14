@@ -1,0 +1,39 @@
+name: clang-format
+env: 
+  JFROG_ARTIFACTORY_URL: "https://chatlab.jfrog.io/artifactory"
+
+on: 
+  pull_request:
+    types: [opened, synchronize]
+
+jobs: 
+  clang-format-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+        with:
+          path: chatlab
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v2
+
+      - name: Download clang-format tool
+        run: |
+          jf --version
+          jf rt dl "build-testing-cargo-local/clang-format/*" . --url="${{ env.JFROG_ARTIFACTORY_URL }}" --access-token="${{ secrets.JF_SECRET_ADMIN }}"
+      
+      - name: Run clang-format
+        run: |
+          ls -la
+          chmod +x ./clang-format/*
+          for file in $(find . -regex './chatlab/src/.*\.\(cpp\|hpp\|c\|h\)')
+          do
+            echo "[DEBUG]: Analyzing ${file}"
+            ./clang-format/clang-format --verbose -n ${file}
+            if [[ $? != 0 ]]
+            then
+              exit_code=1
+            fi
+          done
+          exit ${exit_code}
