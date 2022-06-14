@@ -2,6 +2,6 @@ list (APPEND SERVER_SRC
     server.cpp
     )
 
-add_library(server)
-target_sources(server PRIVATE ${SERVER_SRC})
-install(TARGETS server)
+set(executable "server")
+add_executable(server ${SERVER_SRC})
+install(TARGETS server DESTINATION ${CMAKE_BINARY_DIR}/_install)
