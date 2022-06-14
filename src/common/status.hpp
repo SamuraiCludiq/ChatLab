@@ -5,7 +5,7 @@ namespace chatlab {
 
 enum class cl_status {
 /* common function return codes */
-    SUCCES,
+    SUCCESS,
     ERROR,
 /* client errors */
     SERVER_CONN_ERROR /* can't connect to server */

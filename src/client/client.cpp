@@ -8,7 +8,7 @@ int main(int argc, char const* argv[])
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(CL_DEFAULT_PORT);
-    serv_addr.sin_addr.s_addr = CL_DEFAULT_SERV_ADDR;
+    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     if ((client.fd
          = connect(client.sock, (struct sockaddr*)&serv_addr,
