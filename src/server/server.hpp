@@ -29,8 +29,8 @@ class Server {
     int serv_port, serv_socket;
     ServerStatus serv_status = ServerStatus::stop;
  public:
-    Server();
-    ~Server();
+    Server() {}
+    ~Server() {}
     cl_status Start();
     cl_status Stop();
     cl_status DisconnectClient(ServerClient &client);
