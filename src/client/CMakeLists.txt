@@ -4,4 +4,4 @@ list (APPEND CLIENT_SRC
 
 set(executable "client")
 add_executable(${executable} ${CLIENT_SRC})
-install(TARGETS ${executable} DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS ${executable} DESTINATION ${CMAKE_BINARY_DIR}/_install)

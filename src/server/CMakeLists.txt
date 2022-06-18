@@ -3,5 +3,5 @@ list (APPEND SERVER_SRC
     )
 
 set(executable "server")
-add_executable(server ${SERVER_SRC})
-install(TARGETS server DESTINATION ${CMAKE_BINARY_DIR}/_install)
+add_executable(${executable} ${SERVER_SRC})
+install(TARGETS ${executable} DESTINATION ${CMAKE_BINARY_DIR}/_install)
