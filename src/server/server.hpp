@@ -4,6 +4,8 @@
 #include <list>
 #include <thread>
 #include <mutex>
+#include <poll.h>
+
 #include "../common/base.hpp"
 
 namespace chatlab {
@@ -26,24 +28,28 @@ struct ServerClient {
 };
 
 class Server {
-    std::thread accept_thread;
-    std::thread data_thread;
+    int serv_port = CL_DEFAULT_PORT, nclients, max_nclients, serv_socket;
     struct sockaddr_in serv_addr;
+    struct pollfd *pfds;
     std::list<ServerClient> clients;
-    std::mutex clients_mtx;
-    int serv_port = CL_DEFAULT_PORT, nclients = 0, serv_socket;
     ServerStatus serv_status = ServerStatus::stop;
- public:
-    Server() {}
-    ~Server() {}
-    cl_status Start();
-    cl_status Stop();
+
+    cl_status AcceptConnection();
+    cl_status AddToPoll(int fd, short int events);
+    cl_status RmFromPoll(int pos);
     cl_status DisconnectClient(ServerClient &client);
     cl_status DisconnectAll();
+ public:
+    Server() : nclients(0), max_nclients(CL_SERV_INITIAL_CLIENTS) {
+        pfds = (struct pollfd*) malloc(sizeof *pfds * max_nclients);
+    }
+    ~Server() {
+        free(pfds);
+    }
+    cl_status Start();
+    cl_status Stop();
     cl_status SendTo(ServerClient &client);
     cl_status Bcast();
-    void AcceptThreadHandler();
-    void DataThreadHandler();
 };
 
 }
