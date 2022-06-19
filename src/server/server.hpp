@@ -1,8 +1,10 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "../common/base.hpp"
 #include <list>
+#include <thread>
+#include <mutex>
+#include "../common/base.hpp"
 
 namespace chatlab {
 
@@ -24,8 +26,11 @@ struct ServerClient {
 };
 
 class Server {
+    std::thread accept_thread;
+    std::thread data_thread;
     struct sockaddr_in serv_addr;
     std::list<ServerClient> clients;
+    std::mutex clients_mtx;
     int serv_port = CL_DEFAULT_PORT, nclients = 0, serv_socket;
     ServerStatus serv_status = ServerStatus::stop;
  public:
@@ -38,6 +43,7 @@ class Server {
     cl_status SendTo(ServerClient &client);
     cl_status Bcast();
     void AcceptThreadHandler();
+    void DataThreadHandler();
 };
 
 }
