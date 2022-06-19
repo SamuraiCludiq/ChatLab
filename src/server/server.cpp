@@ -5,7 +5,7 @@ namespace chatlab {
 cl_status Server::Start() {
     int opt = 1;
     this->serv_port = CL_DEFAULT_PORT;
-    this->serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    this->serv_addr.sin_addr.s_addr = inet_addr(CL_DEFAULT_SERV_ADDR);
     this->serv_addr.sin_port = htons(serv_port);
     this->serv_addr.sin_family = CL_SOCK_TYPE;
 
