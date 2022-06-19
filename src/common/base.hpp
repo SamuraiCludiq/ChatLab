@@ -30,6 +30,11 @@
 #define DEBUG_PRINT(fmt, ...)
 #endif
 
+#define ERROR_PRINT(fmt, args...) fprintf(stderr, "ERROR: %s:%d:%s(): " fmt, \
+                                          __FILE__, __LINE__, __func__, ##args)
 
+#define WARNING_PRINT(fmt, args...) fprintf(stderr, "WARNING: " fmt, ##args)
+
+#define PRINT(fmt, args...) fprintf(stderr, fmt, ##args)
 
 #endif /* BASE_HPP */

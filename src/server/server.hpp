@@ -26,7 +26,7 @@ struct ServerClient {
 class Server {
     struct sockaddr_in serv_addr;
     std::list<ServerClient> clients;
-    int serv_port, serv_socket;
+    int serv_port = CL_DEFAULT_PORT, nclients = 0, serv_socket;
     ServerStatus serv_status = ServerStatus::stop;
  public:
     Server() {}
