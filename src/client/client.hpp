@@ -12,7 +12,7 @@ class Client {
  private:
     int sock;
     int fd;
-    char *buf;
+    char *buf = NULL;
     struct sockaddr_in serv_addr;
     std::string username = "anonymous";
     ClientStatus status = ClientStatus::disconnected;
@@ -41,9 +41,10 @@ class Client {
         return cl_status::SUCCESS;
     };
     cl_status SockWrite(const void *send_buf, int maxlen);
-    cl_status Send(std::string msg);
+    cl_status Send(std::string msg, CmdType cmd_type = CmdType::send);
     /* Broadcast a message to all connected clients */
     cl_status Bcast();
+    void WaitForCommand();
     cl_status SetUsername(std::string name) {
         this->username = name;
         return cl_status::SUCCESS;
