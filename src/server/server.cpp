@@ -36,7 +36,7 @@ cl_status Server::Start() {
 
     AddToPoll(serv_socket, POLLIN); // adding serv_socket to accept incoming connections
 
-    while(true) {
+    while(serv_status == ServerStatus::run) {
         int poll_cnt = poll(pfds, nclients, -1);
         if (poll_cnt == -1) {
             ERROR_PRINT("failed to poll\n");
@@ -51,7 +51,7 @@ cl_status Server::Start() {
                 } else { // client
                     Cmd cmd;
 
-                    // step 1: reading command
+                    // reading command, we are expecting that alignement is even on all machines
                     int nbytes = read(pfds[i].fd, &cmd, sizeof(cmd));
                     if (nbytes <= 0) {
                         if (nbytes == 0) {
@@ -61,23 +61,37 @@ cl_status Server::Start() {
                         }
                         close(pfds[i].fd);
                         RmFromPoll(i);
-                    } else if (cmd.msg_size > 0) {
-                        DEBUG_PRINT("waiting for msg_size=%d\n", cmd.msg_size);
-                        msg_buffer = (char *) malloc(cmd.msg_size * sizeof(char));
+                    }
 
-                        nbytes = read(pfds[i].fd, msg_buffer, cmd.msg_size);
-                        if (nbytes <= 0) {
-                            if (nbytes == 0) {
-                                ERROR_PRINT("socket %d hung up\n", pfds[i].fd);
-                            } else {
-                                ERROR_PRINT("recv from fd=%d failed\n", pfds[i].fd);
+                    switch (cmd.type)
+                    {
+                        case CmdType::send:
+                            if (cmd.msg_size > 0) {
+                                DEBUG_PRINT("waiting for msg_size=%d\n", cmd.msg_size);
+                                msg_buffer = (char *) malloc(cmd.msg_size * sizeof(char));
+
+                                nbytes = read(pfds[i].fd, msg_buffer, cmd.msg_size);
+                                if (nbytes <= 0) {
+                                    if (nbytes == 0) {
+                                        ERROR_PRINT("socket %d hung up\n", pfds[i].fd);
+                                    } else {
+                                        ERROR_PRINT("recv from fd=%d failed\n", pfds[i].fd);
+                                    }
+                                    close(pfds[i].fd);
+                                    RmFromPoll(i);
+                                }
+
+                                std::cout << msg_buffer << std::endl;
+                                free(msg_buffer);
                             }
-                            close(pfds[i].fd);
-                            RmFromPoll(i);
-                        }
-
-                        std::cout << msg_buffer << std::endl;
-                        free(msg_buffer);
+                            break;
+                        case CmdType::terminate:
+                            if (true) { // only admin should terminate server
+                                serv_status = ServerStatus::stop;
+                            }
+                            break;
+                        default:
+                            break;
                     }
                 }
             }

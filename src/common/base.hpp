@@ -45,7 +45,10 @@ enum class ClientStatus {
 };
 
 enum class CmdType {
-    send
+    send,
+    terminate,
+    setusername,
+    setrights
 };
 
 struct Cmd {
