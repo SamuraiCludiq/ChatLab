@@ -21,7 +21,7 @@ jobs:
       - name: Download clang-format tool
         run: |
           jf --version
-          jf rt dl "build-testing-cargo-local/clang-format/*" . --url="${{ env.JFROG_ARTIFACTORY_URL }}" --access-token="${{ secrets.JF_SECRET_ADMIN }}"
+          jf rt dl "build-testing-cargo-local/clang-format/*" . --url="${{ env.JFROG_ARTIFACTORY_URL }}" --access-token="${{ secrets.JF_ADMIN_SECRET }}"
       
       - name: Run clang-format
         run: |
