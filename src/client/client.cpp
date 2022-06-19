@@ -10,6 +10,9 @@ int main(int argc, char const* argv[])
     serv_addr.sin_port = htons(CL_DEFAULT_PORT);
     serv_addr.sin_addr.s_addr = inet_addr(CL_DEFAULT_SERV_ADDR);
 
+    PRINT("Startup: server addres: %s, server_port: %d \n",
+          inet_ntoa(serv_addr.sin_addr), htons(serv_addr.sin_port));
+
     if ((client.fd
          = connect(client.sock, (struct sockaddr*)&serv_addr,
                    sizeof(serv_addr)))
