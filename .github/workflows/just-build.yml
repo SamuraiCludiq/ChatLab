@@ -1,0 +1,25 @@
+name: just-build
+
+on: 
+  issue_comment:
+    types: [created, edited, deleted]
+
+jobs:
+  just-build-job:
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/justbuild' )) }}
+    runs-on: [ubuntu-latest]
+    strategy:
+      matrix:
+        conf: [Release, Debug]
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+
+      - name: Check environment
+        run: |
+          gcc --version
+          g++ --version
+          python3 --version
+
+      - name: Build ${{ matrix.conf }}
+        run: python3 ./infra/scripts/build.py --conf ${{ matrix.conf }}
