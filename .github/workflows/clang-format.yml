@@ -18,10 +18,14 @@ jobs:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v2
 
+      - name: Test secret
+        run: |
+          echo ${{ secrets.JF_SECRET_ADMIN }}
+
       - name: Download clang-format tool
         run: |
           jf --version
-          jf rt dl "build-testing-cargo-local/clang-format/*" . --url="${{ env.JFROG_ARTIFACTORY_URL }}" --access-token="${{ secrets.JF_ADMIN_SECRET }}"
+          jf rt dl "build-testing-cargo-local/clang-format/*" . --url="${{ env.JFROG_ARTIFACTORY_URL }}" --access-token="${{ secrets.JF_SECRET_ADMIN }}"
       
       - name: Run clang-format
         run: |
