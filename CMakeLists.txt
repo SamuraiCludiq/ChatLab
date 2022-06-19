@@ -32,3 +32,4 @@ message(STATUS "BUILD_SERVER: ${BUILD_SERVER}")
 message(STATUS "BUILD_CLIENT: ${BUILD_CLIENT}")
 
 add_subdirectory(src)
+
