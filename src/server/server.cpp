@@ -34,20 +34,28 @@ cl_status Server::Start() {
                 inet_ntoa(this->serv_addr.sin_addr), htons(this->serv_addr.sin_port));
     DEBUG_PRINT("server is running\n");
 
-    while (serv_status == ServerStatus::run) {
+    this->accept_thread = std::thread([this]{AcceptThreadHandler();});
+
+    return cl_status::SUCCESS;
+}
+
+void Server::AcceptThreadHandler() {
+    int i = 0, max_acc = 5;
+    while (i < max_acc) {
         ServerClient new_client;
 
         new_client.socket = accept(serv_socket, (struct sockaddr*)&new_client.addr, &new_client.addr_len);
         if (new_client.socket >= 0 && serv_status == ServerStatus::run) {
             DEBUG_PRINT("accepted new connection from %s\n", inet_ntoa(new_client.addr.sin_addr));
             new_client.status = ClientStatus::connected;
+            clients_mtx.lock();
             clients.push_back(new_client);
+            clients_mtx.unlock();
+            i++;
         } else {
             WARNING_PRINT("invalid connection from %s\n", inet_ntoa(new_client.addr.sin_addr));
         }
     }
-
-    return cl_status::SUCCESS;
 }
 
 cl_status Server::Stop() {
@@ -55,7 +63,11 @@ cl_status Server::Stop() {
     if(DisconnectAll() != cl_status::SUCCESS) {
         return cl_status::ERROR;
     };
+
+    accept_thread.join();
     close(serv_socket);
+
+    WARNING_PRINT("server is shutting down\n");
 
     return cl_status::SUCCESS;
 }
@@ -83,6 +95,7 @@ int main(int argc, char const* argv[])
     chatlab::Server server;
 
     server.Start();
+    server.Stop();
 
     return 0;
 }

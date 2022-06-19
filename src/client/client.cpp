@@ -13,11 +13,9 @@ int main(int argc, char const* argv[])
     PRINT("Startup: server addres: %s, server_port: %d \n",
           inet_ntoa(serv_addr.sin_addr), htons(serv_addr.sin_port));
 
-    if ((client.fd
-         = connect(client.sock, (struct sockaddr*)&serv_addr,
-                   sizeof(serv_addr)))
-        < 0) {
-        printf("\nConnection Failed \n");
+    client.fd = connect(client.sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    if (client.fd < 0) {
+        ERROR_PRINT("connection failed \n");
         return -1;
     }
 
