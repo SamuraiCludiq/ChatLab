@@ -2,6 +2,7 @@
 #define BASE_HPP
 
 #include <iostream>
+#include <cstring>
 
 #include "status.hpp"
 
@@ -37,5 +38,19 @@
 #define WARNING_PRINT(fmt, args...) fprintf(stderr, "WARNING: " fmt, ##args)
 
 #define PRINT(fmt, args...) fprintf(stderr, fmt, ##args)
+
+enum class ClientStatus {
+    connected,
+    disconnected
+};
+
+enum class CmdType {
+    send
+};
+
+struct Cmd {
+    CmdType type;
+    unsigned int msg_size;
+};
 
 #endif /* BASE_HPP */

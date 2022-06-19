@@ -10,22 +10,22 @@ cl_status Server::Start() {
     this->serv_addr.sin_family = CL_SOCK_TYPE;
 
     if ((serv_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        ERROR_PRINT("can't create socket");
+        ERROR_PRINT("can't create socket\n");
         return cl_status::ERROR;
     }
 
     if (setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-        ERROR_PRINT("can't set socket options");
+        ERROR_PRINT("can't set socket options\n");
         return cl_status::ERROR;
     }
 
     if (bind(serv_socket, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        ERROR_PRINT("can't bind socket");
+        ERROR_PRINT("can't bind socket\n");
         return cl_status::ERROR;
     }
 
     if(listen(serv_socket, SOMAXCONN) < 0) {
-        ERROR_PRINT("can't listen");
+        ERROR_PRINT("can't listen\n");
         return cl_status::ERROR;
     }
 
@@ -36,33 +36,48 @@ cl_status Server::Start() {
 
     AddToPoll(serv_socket, POLLIN); // adding serv_socket to accept incoming connections
 
-    char buf[100];
     while(true) {
         int poll_cnt = poll(pfds, nclients, -1);
         if (poll_cnt == -1) {
             ERROR_PRINT("failed to poll\n");
             return cl_status::ERROR;
         }
-
-        DEBUG_PRINT("poll get event\n");
+        DEBUG_PRINT("poll event occured\n");
 
         for(int i = 0; i < nclients; i++) {
             if (pfds[i].revents & POLLIN) {
                 if (pfds[i].fd == serv_socket) { // incoming connection
                     AcceptConnection();
                 } else { // client
-                    int nbytes = recv(pfds[i].fd, buf, sizeof buf, 0);
+                    Cmd cmd;
 
+                    // step 1: reading command
+                    int nbytes = read(pfds[i].fd, &cmd, sizeof(cmd));
                     if (nbytes <= 0) {
                         if (nbytes == 0) {
                             ERROR_PRINT("socket %d hung up\n", pfds[i].fd);
                         } else {
-                            ERROR_PRINT("recv from fd=%d failed\n", pfds[i].fd);
+                            ERROR_PRINT("reading cmd from fd=%d failed\n", pfds[i].fd);
                         }
                         close(pfds[i].fd);
                         RmFromPoll(i);
-                    } else {
-                        std::cout << buf << std::endl;
+                    } else if (cmd.msg_size > 0) {
+                        DEBUG_PRINT("waiting for msg_size=%d\n", cmd.msg_size);
+                        msg_buffer = (char *) malloc(cmd.msg_size * sizeof(char));
+
+                        nbytes = read(pfds[i].fd, msg_buffer, cmd.msg_size);
+                        if (nbytes <= 0) {
+                            if (nbytes == 0) {
+                                ERROR_PRINT("socket %d hung up\n", pfds[i].fd);
+                            } else {
+                                ERROR_PRINT("recv from fd=%d failed\n", pfds[i].fd);
+                            }
+                            close(pfds[i].fd);
+                            RmFromPoll(i);
+                        }
+
+                        std::cout << msg_buffer << std::endl;
+                        free(msg_buffer);
                     }
                 }
             }
@@ -113,6 +128,7 @@ cl_status Server::AcceptConnection() {
         AddToPoll(new_client.socket, POLLIN);
         return cl_status::SUCCESS;
     } else {
+        ERROR_PRINT("connection with %s failed\n", inet_ntoa(new_client.addr.sin_addr));
         return cl_status::ERROR;
     }
 }

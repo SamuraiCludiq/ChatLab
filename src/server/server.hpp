@@ -15,11 +15,6 @@ enum class ServerStatus {
     run
 };
 
-enum class ClientStatus {
-    connected,
-    disconnected
-};
-
 struct ServerClient {
     struct sockaddr_in addr;
     socklen_t addr_len;
@@ -29,6 +24,7 @@ struct ServerClient {
 
 class Server {
     int serv_port = CL_DEFAULT_PORT, nclients, max_nclients, serv_socket;
+    char *msg_buffer = NULL;
     struct sockaddr_in serv_addr;
     struct pollfd *pfds;
     std::list<ServerClient> clients;
@@ -44,7 +40,12 @@ class Server {
         pfds = (struct pollfd*) malloc(sizeof *pfds * max_nclients);
     }
     ~Server() {
-        free(pfds);
+        if (pfds) {
+            free(pfds);
+        }
+        if (msg_buffer) {
+            free(msg_buffer);
+        }
     }
     cl_status Start();
     cl_status Stop();
