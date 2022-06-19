@@ -7,7 +7,7 @@
 
 #define CL_SOCK_TYPE AF_INET
 #define CL_DEFAULT_PORT 8080
-#define CL_DEFAULT_SERV_ADDR 0x7f000001 /* 127.0.0.1 */
+#define CL_DEFAULT_SERV_ADDR "127.0.0.1"
 
 #ifdef _WIN32
 #include <windows.h>
