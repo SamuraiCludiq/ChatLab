@@ -1,0 +1,34 @@
+name: style-checker
+
+on: 
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  style-checker-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+
+      - name: Check clang-format tool
+        run: |
+          clang-format --version
+      
+      - name: Run clang-format
+        run: |
+          ls -la
+          clang-format --verbose -n $(git ls-files '*.cpp' '*.hpp' '*.c' '*.h')
+          exit $?
+
+      - name: Install dependencies
+        run: |
+          command -v python
+          python -m pip install --upgrade pip
+          pip install pylint
+
+      - name: Run pylint
+        run: |
+          ls -la
+          pylint -E --verbose $(git ls-files '*.py')
+          exit $?
