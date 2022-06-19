@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import argparse
 
-PROJECT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BUILD_PARAMETERS = {}
 
 def get_parser():
@@ -15,24 +15,28 @@ def get_parser():
     return parser
 
 def check_args_values(args):
+    """The fucntion checks that all arguments are correct and set them into global variables."""
+
     if not isinstance(args.conf, type(None)):
-        if args.conf.lower() not in ["release", "debug"]:
-            raise ValueError(f"Incorrect configuration type (see help for more details)")
-        else:
+        if args.conf.lower() in ["release", "debug"]:
             BUILD_PARAMETERS["conf"] = args.conf.lower().title()
+        else:
+            raise ValueError("Incorrect configuration type (see help for more details)")
     if not isinstance(args.build, type(None)):
-        if args.build.lower() not in ["server", "client", "all"]:
-            raise ValueError(f"Incorrect build type (see help for more details)")
-        else:
+        if args.build.lower() in ["server", "client", "all"]:
             BUILD_PARAMETERS["build"] = args.build.lower()
-    if not (isinstance(args.c_compiler, type(None)) and isinstance(args.cxx_compiler, type(None))):
-        if isinstance(args.c_compiler, type(None)) or isinstance(args.cxx_compiler, type(None)):
-            raise ValueError(f"Please specify C and CXX compilers")
         else:
+            raise ValueError("Incorrect build type (see help for more details)")
+    if not (isinstance(args.c_compiler, type(None)) and isinstance(args.cxx_compiler, type(None))):
+        if not isinstance(args.c_compiler, type(None)) and not isinstance(args.cxx_compiler, type(None)):
             BUILD_PARAMETERS["c_compiler"] = args.c_compiler
             BUILD_PARAMETERS["cxx_compuler"] = args.cxx_compiler
+        else:
+            raise ValueError("Please specify C and CXX compilers")
 
 def set_default_parameters():
+    """Set default values into global variables"""
+
     global BUILD_PARAMETERS
 
     BUILD_PARAMETERS = {
@@ -43,6 +47,8 @@ def set_default_parameters():
     }
 
 def build():
+    """Build application executable files"""
+
     build_dir = os.path.join(PROJECT_ROOT_DIR, "build")
     if os.path.exists(build_dir):
         while True:
@@ -53,18 +59,18 @@ def build():
             shutil.rmtree(build_dir)
             os.mkdir(os.path.join(PROJECT_ROOT_DIR, "build"))
 
-    cmakeCmd = ["cmake",  "-B", f"{build_dir}", f"-DCMAKE_C_COMPILER={BUILD_PARAMETERS['c_compiler']}", 
+    cmake_cmd = ["cmake",  "-B", f"{build_dir}", f"-DCMAKE_C_COMPILER={BUILD_PARAMETERS['c_compiler']}",
                 f"-DCMAKE_CXX_COMPILER={BUILD_PARAMETERS['cxx_compiler']}", f"-DCMAKE_BUILD_TYPE={BUILD_PARAMETERS['conf']}"]
     if BUILD_PARAMETERS["build"] == "client":
-        cmakeCmd.extend(["-DBUILD_SERVER=OFF", "-DBUILD_CLIENT=ON"])
+        cmake_cmd.extend(["-DBUILD_SERVER=OFF", "-DBUILD_CLIENT=ON"])
     elif BUILD_PARAMETERS["build"] == "server":
-        cmakeCmd.extend(["-DBUILD_SERVER=ON", "-DBUILD_CLIENT=OFF"])
-    print(f"[DEBUG]: cmake command line: {' '.join(cmakeCmd)}")
-    subprocess.call(cmakeCmd)
+        cmake_cmd.extend(["-DBUILD_SERVER=ON", "-DBUILD_CLIENT=OFF"])
+    print(f"[DEBUG]: cmake command line: {' '.join(cmake_cmd)}")
+    subprocess.call(cmake_cmd)
 
-    makeCmd = ["make", "-C", f"{build_dir}", "VERBOSE=1", "install"]
-    print(f"[DEBUG]: make command line: {' '.join(makeCmd)}")
-    subprocess.call(makeCmd)
+    make_cmd = ["make", "-C", f"{build_dir}", "VERBOSE=1", "install"]
+    print(f"[DEBUG]: make command line: {' '.join(make_cmd)}")
+    subprocess.call(make_cmd)
 
 def main():
     set_default_parameters()
