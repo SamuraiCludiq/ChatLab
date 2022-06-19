@@ -6,7 +6,7 @@ on:
 
 jobs:
   just-build-job:
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/justbuild' )) }}
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/justbuild') }}
     runs-on: [ubuntu-latest]
     strategy:
       matrix:
