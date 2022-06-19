@@ -3,8 +3,28 @@
 namespace chatlab {
     cl_status Client::Connect() {
         fd = connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-        if (fd < 0) {
+        if (fd != 0) {
             ERROR_PRINT("can't connect to server\n");
+            switch (errno)
+            {
+            case EBADF:
+                ERROR_PRINT("EBADF\n");
+                break;
+            case EFAULT:
+                ERROR_PRINT("ERROR_PRINT\n");
+                break;
+            case ENOTSOCK:
+                ERROR_PRINT("ERROR_PRINT\n");
+                break;
+            case EISCONN:
+                ERROR_PRINT("ERROR_PRINT\n");
+                break;
+            case ECONNREFUSED:
+                ERROR_PRINT("ECONNREFUSED\n");
+                break;
+            default:
+                break;
+            }
             return cl_status::ERROR;
         }
         DEBUG_PRINT("connected to server\n");
@@ -45,13 +65,7 @@ namespace chatlab {
         goto fn_exit;
     }
 
-    cl_status Client::Send(std::string msg) {
-        if (msg.size() == 0) {
-            // don't panic if message is empty
-            DEBUG_PRINT("not sending empty msg\n");
-            return cl_status::SUCCESS;
-        }
-
+    cl_status Client::Send(std::string msg, CmdType cmd_type) {
         if (status == ClientStatus::disconnected) {
             ERROR_PRINT("not connected to a server");
         }
@@ -60,7 +74,7 @@ namespace chatlab {
         struct Cmd cmd;
 
         cmd.msg_size = msg.size();
-        cmd.type = CmdType::send;
+        cmd.type = cmd_type;
 
         if (SockWrite(&cmd, sizeof(cmd)) == cl_status::ERROR) {
             ERROR_PRINT("send failed\n");
@@ -68,20 +82,43 @@ namespace chatlab {
         }
         DEBUG_PRINT("sent cmd to server\n");
 
-        // step 2: sending actual data
-        buf = (char *)malloc(sizeof(char) * msg.size());
-        strcpy(buf, msg.c_str());
-        if (SockWrite(buf, msg.size()) == cl_status::ERROR) {
+        if (msg.size() > 0) {
+            // step 2: sending actual data
+            buf = (char *)malloc(sizeof(char) * msg.size());
+            strcpy(buf, msg.c_str());
+            if (SockWrite(buf, msg.size()) == cl_status::ERROR) {
+                free(buf);
+                buf = NULL;
+                ERROR_PRINT("send failed\n");
+
+                return cl_status::ERROR;
+            }
             free(buf);
             buf = NULL;
-            ERROR_PRINT("send failed\n");
-
-            return cl_status::ERROR;
         }
-        free(buf);
-        buf = NULL;
 
         return cl_status::SUCCESS;
+    }
+
+    void Client::WaitForCommand() {
+        std::string cmd, msg;
+        while (cmd != "quit") {
+            std::cout << "Enter command: ";
+            std::getline(std::cin, cmd);
+            switch(StrToCmd(cmd)) {
+                case CmdType::send:
+                    std::cout << "Enter message: ";
+                    std::getline(std::cin, msg);
+                    Send(msg);
+                    break;
+                case CmdType::terminate:
+                    msg = "";
+                    Send(msg, CmdType::terminate);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }
 
@@ -92,7 +129,7 @@ int main(int argc, char const* argv[])
 
     chatlab::Client client;
     client.Connect();
-    client.Send(msg);
+    client.WaitForCommand();
     client.Disconnect();
 
     return 0;

@@ -45,11 +45,23 @@ enum class ClientStatus {
 };
 
 enum class CmdType {
-    send,
+    send = 0,
     terminate,
     setusername,
-    setrights
+    setrights,
+    disconnect,
+    quit,
+    invalid
 };
+
+CmdType StrToCmd(std::string cmd) {
+    if (cmd == "send") return CmdType::send;
+    if (cmd == "terminate") return CmdType::terminate;
+    if (cmd == "setusername") return CmdType::setusername;
+    if (cmd == "setrights") return CmdType::setrights;
+    if (cmd == "disconnect") return CmdType::disconnect;
+    return CmdType::invalid;
+}
 
 struct Cmd {
     CmdType type;

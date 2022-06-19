@@ -65,33 +65,35 @@ cl_status Server::Start() {
 
                     switch (cmd.type)
                     {
-                        case CmdType::send:
-                            if (cmd.msg_size > 0) {
-                                DEBUG_PRINT("waiting for msg_size=%d\n", cmd.msg_size);
-                                msg_buffer = (char *) malloc(cmd.msg_size * sizeof(char));
+                    case CmdType::send:
+                        if (cmd.msg_size > 0) {
+                            DEBUG_PRINT("waiting for msg_size=%d\n", cmd.msg_size);
+                            msg_buffer = (char *) malloc(cmd.msg_size * sizeof(char)); 
+                            memset(msg_buffer, 0, cmd.msg_size * sizeof(char));
 
-                                nbytes = read(pfds[i].fd, msg_buffer, cmd.msg_size);
-                                if (nbytes <= 0) {
-                                    if (nbytes == 0) {
-                                        ERROR_PRINT("socket %d hung up\n", pfds[i].fd);
-                                    } else {
-                                        ERROR_PRINT("recv from fd=%d failed\n", pfds[i].fd);
-                                    }
-                                    close(pfds[i].fd);
-                                    RmFromPoll(i);
+                            nbytes = read(pfds[i].fd, msg_buffer, cmd.msg_size);
+                            if (nbytes <= 0) {
+                                if (nbytes == 0) {
+                                    ERROR_PRINT("socket %d hung up\n", pfds[i].fd);
+                                } else {
+                                    ERROR_PRINT("recv from fd=%d failed\n", pfds[i].fd);
                                 }
-
-                                std::cout << msg_buffer << std::endl;
-                                free(msg_buffer);
+                                close(pfds[i].fd);
+                                RmFromPoll(i);
                             }
-                            break;
-                        case CmdType::terminate:
-                            if (true) { // only admin should terminate server
-                                serv_status = ServerStatus::stop;
-                            }
-                            break;
-                        default:
-                            break;
+                            std::cout << msg_buffer << std::endl;
+                            free(msg_buffer);
+                            msg_buffer = NULL;
+                        }
+                        break;
+                    case CmdType::terminate:
+                        if (true) { // only admin should terminate server
+                            DEBUG_PRINT("server recieved terminate cmd\n");
+                            serv_status = ServerStatus::stop;
+                        }
+                        break;
+                    default:
+                        break;
                     }
                 }
             }
@@ -134,6 +136,7 @@ cl_status Server::RmFromPoll(int pos) {
 
 cl_status Server::AcceptConnection() {
     ServerClient new_client;
+    new_client.addr_len = sizeof( (struct sockaddr *) &new_client.addr);
     new_client.socket = accept(serv_socket, (struct sockaddr*)&new_client.addr, &new_client.addr_len);
     if (new_client.socket >= 0 && serv_status == ServerStatus::run) {
         DEBUG_PRINT("accepted new connection from %s\n", inet_ntoa(new_client.addr.sin_addr));
@@ -143,6 +146,32 @@ cl_status Server::AcceptConnection() {
         return cl_status::SUCCESS;
     } else {
         ERROR_PRINT("connection with %s failed\n", inet_ntoa(new_client.addr.sin_addr));
+        switch (errno)
+        {
+        case EBADF:
+            ERROR_PRINT("EBADF\n");
+            break;
+        case ENOTSOCK:
+            ERROR_PRINT("ENOTSOCK\n");
+            break;
+        case EOPNOTSUPP:
+            ERROR_PRINT("EOPNOTSUPP\n");
+            break;
+        case ECONNABORTED:
+            ERROR_PRINT("ECONNABORTED\n");
+            break;
+        case EINVAL:
+            ERROR_PRINT("EINVAL\n");
+            break;
+        case EMFILE:
+            ERROR_PRINT("EMFILE\n");
+            break;
+        case ENFILE:
+            ERROR_PRINT("ENFILE\n");
+            break;
+        default:
+            break;
+        }
         return cl_status::ERROR;
     }
 }
