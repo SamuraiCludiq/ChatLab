@@ -67,7 +67,7 @@ namespace chatlab {
 
     cl_status Client::Send(std::string msg, CmdType cmd_type) {
         if (status == ClientStatus::disconnected) {
-            ERROR_PRINT("not connected to a server");
+            ERROR_PRINT("not connected to a server\n");
         }
 
         // step 1: sending command
