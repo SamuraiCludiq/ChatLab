@@ -11,13 +11,13 @@ namespace chatlab {
                 ERROR_PRINT("EBADF\n");
                 break;
             case EFAULT:
-                ERROR_PRINT("ERROR_PRINT\n");
+                ERROR_PRINT("EFAULT\n");
                 break;
             case ENOTSOCK:
-                ERROR_PRINT("ERROR_PRINT\n");
+                ERROR_PRINT("ENOTSOCK\n");
                 break;
             case EISCONN:
-                ERROR_PRINT("ERROR_PRINT\n");
+                ERROR_PRINT("EISCONN\n");
                 break;
             case ECONNREFUSED:
                 ERROR_PRINT("ECONNREFUSED\n");

@@ -4,8 +4,6 @@
 #include <iostream>
 #include <cstring>
 
-#include "status.hpp"
-
 #define CL_SOCK_TYPE AF_INET
 #define CL_DEFAULT_PORT 8080
 #define CL_DEFAULT_SERV_ADDR "127.0.0.1"
@@ -38,6 +36,12 @@
 #define WARNING_PRINT(fmt, args...) fprintf(stderr, "WARNING: " fmt, ##args)
 
 #define PRINT(fmt, args...) fprintf(stderr, fmt, ##args)
+
+enum class cl_status {
+/* common function return codes */
+    SUCCESS,
+    ERROR
+};
 
 enum class ClientStatus {
     connected,
