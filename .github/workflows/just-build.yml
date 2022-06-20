@@ -23,3 +23,31 @@ jobs:
 
       - name: Build ${{ matrix.conf }}
         run: python3 ./infra/scripts/build.py --conf ${{ matrix.conf }}
+
+      - name: Set sattus
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: 'Test run ${{ matrix.conf }}'
+          description: 'Passed'
+          state: 'success'
+          sha: ${{github.event.pull_request.head.sha || github.sha}}
+
+# on:
+#   pull_request:
+#     types: [opened]
+#   issue_comment:
+#     types: [created]
+
+# jobs:
+#   just-build-job:
+#     runs-on: [ubuntu-latest]
+#     steps:
+#       - uses: khan/pull-request-comment-trigger@v1.1.0
+#         id: check
+#         with:
+#           trigger: '#justbuild'
+#         env:
+#           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+#       - run: 'echo Found it!'
+#         if: steps.check.outputs.triggered == 'true'
