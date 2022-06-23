@@ -1,8 +1,8 @@
 #ifndef BASE_HPP
 #define BASE_HPP
 
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 #define CL_SOCK_TYPE AF_INET
 #define CL_DEFAULT_PORT 8080
@@ -17,36 +17,34 @@
 
 #ifdef _WIN32
 #else
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #endif
 
-
 #ifdef DEBUG
-#define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
-                                          __FILE__, __LINE__, __func__, ##args)
+#define DEBUG_PRINT(fmt, args...)                                            \
+    fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, \
+            ##args)
 #else
 #define DEBUG_PRINT(fmt, ...)
 #endif
 
-#define ERROR_PRINT(fmt, args...) fprintf(stderr, "ERROR: %s:%d:%s(): " fmt, \
-                                          __FILE__, __LINE__, __func__, ##args)
+#define ERROR_PRINT(fmt, args...)                                            \
+    fprintf(stderr, "ERROR: %s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, \
+            ##args)
 
 #define WARNING_PRINT(fmt, args...) fprintf(stderr, "WARNING: " fmt, ##args)
 
 #define PRINT(fmt, args...) fprintf(stderr, fmt, ##args)
 
 enum class cl_status {
-/* common function return codes */
+    /* common function return codes */
     SUCCESS,
     ERROR
 };
 
-enum class ClientStatus {
-    connected,
-    disconnected
-};
+enum class ClientStatus { connected, disconnected };
 
 enum class CmdType {
     send = 0,

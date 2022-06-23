@@ -2,20 +2,21 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <string>
 #include <memory>
+#include <string>
+
 #include "../common/base.hpp"
 #include "../network/sockiface.hpp"
-
 
 namespace chatlab {
 
 template <class T>
 class Client {
- private:
+   private:
     std::string username = "anonymous";
     ClientStatus status = ClientStatus::disconnected;
- public:
+
+   public:
     std::unique_ptr<T> iface;
     Client(T *_iface) : iface(std::unique_ptr<T>(_iface)) {
         status = ClientStatus::connected;
@@ -29,6 +30,6 @@ class Client {
     std::string GetUsername() { return username; }
 };
 
-}
+}  // namespace chatlab
 
 #endif /* !CLIENT_HPP */
