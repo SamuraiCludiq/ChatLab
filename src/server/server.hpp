@@ -1,19 +1,17 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <list>
-#include <thread>
-#include <mutex>
 #include <poll.h>
+
+#include <list>
+#include <mutex>
+#include <thread>
 
 #include "../common/base.hpp"
 
 namespace chatlab {
 
-enum class ServerStatus {
-    stop,
-    run
-};
+enum class ServerStatus { stop, run };
 
 struct ServerClient {
     struct sockaddr_in addr;
@@ -35,9 +33,10 @@ class Server {
     cl_status RmFromPoll(int pos);
     cl_status DisconnectClient(ServerClient &client);
     cl_status DisconnectAll();
- public:
+
+   public:
     Server() : nclients(0), max_nclients(CL_SERV_INITIAL_CLIENTS) {
-        pfds = (struct pollfd*) malloc(sizeof *pfds * max_nclients);
+        pfds = (struct pollfd *)malloc(sizeof *pfds * max_nclients);
     }
     ~Server() {
         if (pfds) {
@@ -53,6 +52,6 @@ class Server {
     cl_status Bcast();
 };
 
-}
+}  // namespace chatlab
 
 #endif /* !SERVER_HPP */

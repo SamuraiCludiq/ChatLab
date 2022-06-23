@@ -4,14 +4,10 @@
 
 #include <base.hpp>
 
-enum class NetifaceType {
-    client,
-    server,
-    notinited
-};
+enum class NetifaceType { client, server, notinited };
 
 class Netiface {
- public:
+   public:
     NetifaceType iface_type = NetifaceType::notinited;
     virtual cl_status InitClient() = 0;
     virtual cl_status InitServer() = 0;
