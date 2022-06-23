@@ -1,4 +1,3 @@
-
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
@@ -10,24 +9,21 @@
 
 namespace chatlab {
 
-template <class T>
-class Client {
-   private:
+class BaseClient {
     std::string username = "anonymous";
     ClientStatus status = ClientStatus::disconnected;
 
    public:
-    std::unique_ptr<T> iface;
-    Client(T *_iface) : iface(std::unique_ptr<T>(_iface)) {
-        status = ClientStatus::connected;
-    }
-    ~Client() {}
-    void WaitForCommand();
-    cl_status SetUsername(std::string name) {
-        this->username = name;
+    ClientStatus GetStatus() { return status; };
+    cl_status SetStatus(ClientStatus status) {
+        this->status = status;
+        return cl_status::SUCCESS;
+    };
+    std::string GetUsername() { return username; }
+    cl_status SetUsername(std::string username) {
+        this->username = username;
         return cl_status::SUCCESS;
     }
-    std::string GetUsername() { return username; }
 };
 
 }  // namespace chatlab

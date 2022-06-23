@@ -1,5 +1,5 @@
 list (APPEND SERVER_SRC
-    server.cpp
+    pollserver.cpp
     )
 
 set(executable "server")
