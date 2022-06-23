@@ -1,5 +1,5 @@
 list (APPEND CLIENT_SRC
-    client.cpp
+    cmdclient.cpp
     )
 
 set(executable "client")

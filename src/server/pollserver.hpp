@@ -1,35 +1,54 @@
-#include "server.hpp"
+#ifndef POLLSERVER_HPP
+#define POLLSERVER_HPP
+
+#include <poll.h>
+
+#include <list>
+
+#include "../client/client.hpp"
 
 namespace chatlab {
 
-cl_status Server::Start() {
-    int opt = 1;
-    this->serv_port = CL_DEFAULT_PORT;
-    this->serv_addr.sin_addr.s_addr = inet_addr(CL_DEFAULT_SERV_ADDR);
-    this->serv_addr.sin_port = htons(serv_port);
-    this->serv_addr.sin_family = CL_SOCK_TYPE;
+class SockServerClient : public BaseClient {
+   public:
+    int socket;
+    socklen_t addr_len;
+    struct sockaddr_in addr;
 
-    if ((serv_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        ERROR_PRINT("can't create socket\n");
-        return cl_status::ERROR;
-    }
+    SockServerClient() {}
+    ~SockServerClient() {}
+};
 
-    if (setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt,
-                   sizeof(opt))) {
-        ERROR_PRINT("can't set socket options\n");
-        return cl_status::ERROR;
-    }
+enum class ServerStatus { run, stop };
 
-    if (bind(serv_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) <
-        0) {
-        ERROR_PRINT("can't bind socket\n");
-        return cl_status::ERROR;
-    }
+class SockServer : public Sockiface {
+   private:
+    int nclients, max_nclients;
+    std::list<SockServerClient> clients;
+    struct pollfd *pfds;
+    ServerStatus serv_status = ServerStatus::stop;
 
-    if (listen(serv_socket, SOMAXCONN) < 0) {
-        ERROR_PRINT("can't listen\n");
-        return cl_status::ERROR;
+    cl_status AcceptConnection();
+    cl_status AddToPoll(int fd, short int events);
+    cl_status RmFromPoll(int pos);
+
+   public:
+    SockServer() : nclients(0), max_nclients(CL_SERV_INITIAL_CLIENTS) {
+        pfds = (struct pollfd *)malloc(sizeof *pfds * max_nclients);
     }
+    ~SockServer() {
+        if (pfds) {
+            free(pfds);
+        }
+    }
+    cl_status Start();
+    cl_status Stop();
+};
+
+cl_status SockServer::Start() {
+    char *msg_buffer = NULL;
+
+    this->InitServer();
 
     serv_status = ServerStatus::run;
     DEBUG_PRINT("server addres: %s, server_port: %d\n",
@@ -37,7 +56,7 @@ cl_status Server::Start() {
                 htons(this->serv_addr.sin_port));
     DEBUG_PRINT("server is running\n");
 
-    AddToPoll(serv_socket,
+    AddToPoll(this->GetId(),
               POLLIN);  // adding serv_socket to accept incoming connections
 
     while (serv_status == ServerStatus::run) {
@@ -50,7 +69,7 @@ cl_status Server::Start() {
 
         for (int i = 0; i < nclients; i++) {
             if (pfds[i].revents & POLLIN) {
-                if (pfds[i].fd == serv_socket) {  // incoming connection
+                if (pfds[i].fd == this->GetId()) {  // incoming connection
                     AcceptConnection();
                 } else {  // client
                     Cmd cmd;
@@ -114,46 +133,16 @@ cl_status Server::Start() {
     return cl_status::SUCCESS;
 }
 
-cl_status Server::AddToPoll(int fd, short int events) {
-    if (nclients == max_nclients) {
-        max_nclients *= 2;
-        pfds = (struct pollfd *)realloc(pfds, sizeof *pfds * max_nclients);
-        DEBUG_PRINT("increasing pfds to %d\n", max_nclients);
-    }
-    DEBUG_PRINT("adding fd=%d to pfds\n", fd);
-
-    pfds[nclients].fd = fd;
-    pfds[nclients].events = events;
-
-    nclients++;
-    return cl_status::SUCCESS;
-}
-
-cl_status Server::RmFromPoll(int pos) {
-    if (nclients > 0) {
-        DEBUG_PRINT("removing fd=%d to pfds\n", pfds[pos].fd);
-
-        pfds[pos].fd = pfds[nclients - 1].fd;
-        pfds[nclients].events = pfds[nclients - 1].events;
-
-        nclients--;
-    } else {
-        ERROR_PRINT("can't remove fd from pfds\n");
-        return cl_status::ERROR;
-    }
-
-    return cl_status::SUCCESS;
-}
-
-cl_status Server::AcceptConnection() {
-    ServerClient new_client;
+cl_status SockServer::AcceptConnection() {
+    SockServerClient new_client;
     new_client.addr_len = sizeof((struct sockaddr *)&new_client.addr);
-    new_client.socket = accept(serv_socket, (struct sockaddr *)&new_client.addr,
-                               &new_client.addr_len);
+    new_client.socket =
+        accept(this->GetId(), (struct sockaddr *)&new_client.addr,
+               &new_client.addr_len);
     if (new_client.socket >= 0 && serv_status == ServerStatus::run) {
         DEBUG_PRINT("accepted new connection from %s\n",
                     inet_ntoa(new_client.addr.sin_addr));
-        new_client.status = ClientStatus::connected;
+        new_client.SetStatus(ClientStatus::connected);
         clients.push_back(new_client);
         AddToPoll(new_client.socket, POLLIN);
         return cl_status::SUCCESS;
@@ -189,35 +178,46 @@ cl_status Server::AcceptConnection() {
     }
 }
 
-cl_status Server::Stop() {
-    // TODO: Bcast shutdown
-    if (DisconnectAll() != cl_status::SUCCESS) {
+cl_status SockServer::AddToPoll(int fd, short int events) {
+    if (nclients == max_nclients) {
+        max_nclients *= 2;
+        pfds = (struct pollfd *)realloc(pfds, sizeof *pfds * max_nclients);
+        DEBUG_PRINT("increasing pfds to %d\n", max_nclients);
+    }
+    DEBUG_PRINT("adding fd=%d to pfds\n", fd);
+
+    pfds[nclients].fd = fd;
+    pfds[nclients].events = events;
+
+    nclients++;
+    return cl_status::SUCCESS;
+}
+
+cl_status SockServer::RmFromPoll(int pos) {
+    if (nclients > 0) {
+        DEBUG_PRINT("removing fd=%d to pfds\n", pfds[pos].fd);
+
+        pfds[pos].fd = pfds[nclients - 1].fd;
+        pfds[nclients].events = pfds[nclients - 1].events;
+
+        nclients--;
+    } else {
+        ERROR_PRINT("can't remove fd from pfds\n");
         return cl_status::ERROR;
-    };
-    close(serv_socket);
+    }
+
+    return cl_status::SUCCESS;
+}
+
+cl_status SockServer::Stop() {
+    // TODO: Bcast shutdown
+    close(this->GetId());
 
     WARNING_PRINT("server is shutting down\n");
 
     return cl_status::SUCCESS;
 }
 
-cl_status Server::DisconnectClient(ServerClient &client) {
-    return cl_status::SUCCESS;
-}
-
-cl_status Server::DisconnectAll() { return cl_status::SUCCESS; }
-
-cl_status Server::SendTo(ServerClient &client) { return cl_status::SUCCESS; }
-
-cl_status Server::Bcast() { return cl_status::SUCCESS; }
-
 }  // namespace chatlab
 
-int main(int argc, char const *argv[]) {
-    chatlab::Server server;
-
-    server.Start();
-    server.Stop();
-
-    return 0;
-}
+#endif /* !POLLSERVER_HPP */
