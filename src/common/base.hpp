@@ -50,6 +50,7 @@ enum class ClientStatus {
 
 enum class CmdType {
     send = 0,
+    bcast,
     terminate,
     setusername,
     setrights,
@@ -60,6 +61,7 @@ enum class CmdType {
 
 CmdType StrToCmd(std::string cmd) {
     if (cmd == "send") return CmdType::send;
+    if (cmd == "bcast") return CmdType::bcast;
     if (cmd == "terminate") return CmdType::terminate;
     if (cmd == "setusername") return CmdType::setusername;
     if (cmd == "setrights") return CmdType::setrights;
