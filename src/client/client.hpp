@@ -15,8 +15,8 @@ class Client {
  private:
     std::string username = "anonymous";
     ClientStatus status = ClientStatus::disconnected;
-    std::unique_ptr<T> iface;
  public:
+    std::unique_ptr<T> iface;
     Client(T *_iface) : iface(std::unique_ptr<T>(_iface)) {
         status = ClientStatus::connected;
     }
