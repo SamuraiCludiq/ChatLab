@@ -1,9 +1,9 @@
-#ifndef Sockiface_H
-#define Sockiface_H
+#ifndef SOCKIFACE_H
+#define SOCKIFACE_H
 
 #include "netiface.h"
 
-class Sockiface : public netiface
+class Sockiface : public Netiface
 {
 private:
     int sock = 0;
@@ -15,6 +15,8 @@ private:
 public:
     Sockiface(char *addr = NULL, int port = 8080, sa_family_t sin_family = AF_INET);
     ~Sockiface();
+    cl_status InitClient();
+    cl_status InitServer();
     cl_status Send(std::string msg, CmdType cmd_type);
     cl_status Recv();
 };
@@ -30,6 +32,14 @@ Sockiface::Sockiface(char *addr, int port, sa_family_t sin_family)
         printf("\n Socket creation error \n");
     }
     DEBUG_PRINT("created socket\n");
+}
+
+cl_status Sockiface::InitClient()
+{
+    if (iface_type != NetifaceType::notinited) {
+        ERROR_PRINT("iface already initialised\n");
+        return cl_status::ERROR;
+    }
 
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) != 0)
     {
@@ -54,8 +64,43 @@ Sockiface::Sockiface(char *addr, int port, sa_family_t sin_family)
         default:
             break;
         }
+        return cl_status::ERROR;
     }
     DEBUG_PRINT("connected to server\n");
+
+    iface_type = NetifaceType::client;
+    return cl_status::SUCCESS;
+}
+
+cl_status Sockiface::InitServer()
+{
+    int opt = 1;
+
+    if (iface_type != NetifaceType::notinited) {
+        ERROR_PRINT("iface already initialised\n");
+        return cl_status::ERROR;
+    }
+
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        ERROR_PRINT("can't set socket options\n");
+        return cl_status::ERROR;
+    }
+
+    if (bind(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        ERROR_PRINT("can't bind socket\n");
+        return cl_status::ERROR;
+    }
+
+    if(listen(sock, SOMAXCONN) < 0) {
+        ERROR_PRINT("can't listen\n");
+        return cl_status::ERROR;
+    }
+
+    DEBUG_PRINT("server addres: %s, server_port: %d\n",
+                inet_ntoa(this->serv_addr.sin_addr), htons(this->serv_addr.sin_port));
+    DEBUG_PRINT("server is running\n");
+
+    return cl_status::SUCCESS;
 }
 
 Sockiface::~Sockiface()
@@ -147,4 +192,4 @@ cl_status Sockiface::Recv()
     return cl_status::SUCCESS;
 }
 
-#endif /* !Sockiface_H */
+#endif /* !SOCKIFACE_H */
