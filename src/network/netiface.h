@@ -14,7 +14,7 @@ class Netiface {
     virtual cl_status InitClient() = 0;
     virtual cl_status InitServer() = 0;
     virtual cl_status Send(T, std::string, CmdType) = 0;
-    virtual cl_status Recv(T) = 0;
+    virtual cl_status Recv(T, std::string *, CmdType *) = 0;
     T GetId() { return id; }
     cl_status SetId(T id) {
         this->id = id;

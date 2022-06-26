@@ -72,48 +72,21 @@ cl_status SockServer::Start() {
                 if (pfds[i].fd == this->GetId()) {  // incoming connection
                     AcceptConnection();
                 } else {  // client
-                    Cmd cmd;
+                    std::string msg;
+                    CmdType type = CmdType::invalid;
 
                     // reading command, we are expecting that alignement is even
                     // on all machines
-                    int nbytes = read(pfds[i].fd, &cmd, sizeof(cmd));
-                    if (nbytes <= 0) {
-                        if (nbytes == 0) {
-                            ERROR_PRINT("socket %d hung up\n", pfds[i].fd);
-                        } else {
-                            ERROR_PRINT("reading cmd from fd=%d failed\n",
-                                        pfds[i].fd);
-                        }
+
+                    if (Recv(pfds[i].fd, &msg, &type) == cl_status::ERROR) {
                         close(pfds[i].fd);
                         RmFromPoll(i);
                     }
 
-                    switch (cmd.type) {
+                    switch (type) {
                         case CmdType::send:
-                            if (cmd.msg_size > 0) {
-                                DEBUG_PRINT("waiting for msg_size=%d\n",
-                                            cmd.msg_size);
-                                msg_buffer =
-                                    (char *)malloc(cmd.msg_size * sizeof(char));
-                                memset(msg_buffer, 0,
-                                       cmd.msg_size * sizeof(char));
-
-                                nbytes =
-                                    read(pfds[i].fd, msg_buffer, cmd.msg_size);
-                                if (nbytes <= 0) {
-                                    if (nbytes == 0) {
-                                        ERROR_PRINT("socket %d hung up\n",
-                                                    pfds[i].fd);
-                                    } else {
-                                        ERROR_PRINT("recv from fd=%d failed\n",
-                                                    pfds[i].fd);
-                                    }
-                                    close(pfds[i].fd);
-                                    RmFromPoll(i);
-                                }
-                                std::cout << msg_buffer << std::endl;
-                                free(msg_buffer);
-                                msg_buffer = NULL;
+                            if (msg.size() > 0) {
+                                std::cout << msg << std::endl;
                             }
                             break;
                         case CmdType::terminate:
